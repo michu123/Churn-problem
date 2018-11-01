@@ -1,5 +1,5 @@
 rm(list=ls())
-setwd('C:/Users/R/Google ¶³ºİµwºĞ/Postschool/Course/Compulsory/Predictive Analytics and Modelling of Data/Project')
+setwd('C:/Users/R/Google Â¶Â³ÂºÃÂµwÂºÃ/Postschool/Course/Compulsory/Predictive Analytics and Modelling of Data/Project')
 
 #library packages
 install.packages('pacman')
@@ -71,6 +71,18 @@ cor(ndata)
 
 
 #Logistic Regression: # of training data= 0.5
+
+ind <-sample(x =1:nrow(basetable), size = nrow(basetable),replace = FALSE)
+trainind <- ind[1:round(length(ind)*.70)]
+valind <- ind[(round(length(ind)*.70)+1):round(length(ind)*.85)]
+testind <- ind[round(length(ind)*.85+1):length(ind)] 
+
+#Test whether there are no intersects
+intersect(trainind, valind)
+intersect(valind, testind)
+intersect(trainind,testind)
+
+# before
 intrain<- createDataPartition(data$Churn,p=0.5,list=FALSE)
 set.seed(100)
 training<- data[intrain,]
@@ -78,6 +90,21 @@ testing<- data[-intrain,]
 dim(training); dim(testing)
 
 lapply(training, unique)
+
+#Create the sets and separate the response    important part!!! I forgot to do it
+train <- basetable[trainind,]
+y_train <- train$Acquisition
+train$Acquisition <- NULL
+
+test <- basetable[testind,]
+y_test <- test$Acquisition
+test$Acquisition <- NULL
+
+val <- basetable[valind,]
+y_val <- val$Acquisition
+val$Acquisition <- NULL
+
+
 
 
 M1 <- glm(Churn ~ .,family=binomial(link='logit'),data=training)
