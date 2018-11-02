@@ -1,10 +1,10 @@
 rm(list=ls())
-setwd('')
+setwd('C:/Users/Regem/Google 雲端硬碟/Postschool/Course/Compulsory/Predictive Analytics and Modelling of Data/Project')
 
 #library packages
 #install.packages('pacman')
 require('pacman')
-p_load("plyr", "corrplot", "ggplot2", "gridExtra", "ggthemes","data.table", "caret", "MASS", "randomForest", "party","plyr")
+p_load("plyr", "corrplot", "ggplot2", "gridExtra", "ggthemes","data.table", "caret", "MASS", "randomForest", "party","plyr",'imputeMissings')
 
 
 
@@ -21,9 +21,27 @@ summary(data)
 lapply(data, unique)
 
 
-#missing value       =>    11/1: impute mode, median     
+#missing value        
 table(is.na(data))
 colSums(is.na(data))
+
+# Method1: impute Median or mode
+library(imputeMissings)
+data_imp <- impute(data = data, flag = FALSE)
+colSums(is.na(data_imp))
+data<-data_imp
+
+# #Method2: random forest   => 1. can not impute factors 2. normally done on a training set 
+# colSums(is.na(data))
+# selection <- c('TotalIntlCalls', 'TotalDayCalls', 'TotalEveMinutes', 'TotalIntlMinutes','TotalDayMinutes','TotalDayMinutes','TotalEveCalls','TotalNightCalls','TotalNightMinutes')
+# subs <- data[,selection]
+# values <- compute(subs, method = 'randomForest')
+# subs_imp <- impute(data = subs, object = values)
+# 
+# #Method3 remove the two columns
+# data$VoiceMailPlan<-NULL
+# data$InternationalPlan<-NULL
+
 
 
 #remove customerID 
@@ -55,6 +73,8 @@ data$StreamingMovies<- as.factor(mapvalues(data$StreamingMovies,
 data$PhoneService<- as.factor(mapvalues(data$PhoneService, 
                                            from=c("No Phone service"),
                                            to=c("No")))
+
+
 #data transformation 2: tenure
 min(data$tenure); max(data$tenure)
 group_tenure <- function(tenure){
@@ -72,37 +92,7 @@ group_tenure <- function(tenure){
 }
 data$tenure_group <- sapply(data$tenure,group_tenure)
 data$tenure_group <- as.factor(data$tenure_group)
-
 data$tenure <- NULL
-
-
-#dummy variable: PaymentMethod. Contract. InternetService 
-for (dummy=c)
-if(!require(dummy, quietly = TRUE)) install.packages('dummy', quiet = TRUE) ; require(dummy, quietly = TRUE)
-
-
-cats1 <- categories(data[,'PaymentMethod', drop = FALSE])
-cats2 <- categories(data[,'Contract', drop = FALSE])
-
-PaymentMethod1 <- dummy::dummy(x = data[,'PaymentMethod', drop = FALSE],object = cats1, int = FALSE)
-Contract1 <- dummy::dummy(x = data[,'Contract', drop = FALSE],object = cats2, int = FALSE)
-
-sapply(PaymentMethod1, table)/nrow(PaymentMethod1)
-sapply(Contract1, table)/nrow(Contract1)
-
-data$PaymentMethod <- NULL
-data <- cbind(PaymentMethod1,data)
-head (data)
-
-data$Contract <- NULL
-data <- cbind(Contract1,data)
-
-data$InternetService <- as.numeric(as.factor(mapvalues(data$InternetService , 
-                                        from=c("No","DSL","Fiber optic"),
-                                        to=c("0","1","2"))))-1
-table(data$InternetService)
-
-
 
 #correlation
 library(reshape)
@@ -116,29 +106,28 @@ a[order(abs(a$value),decreasing = TRUE),]
 
 # remove Variables: high correlated: MonthlyCharges         TotalCharges 
 data$TotalCharges <- NULL
+data$TotalCall <- NULL
 
 
-
-
-#plot(ndata)
-p1 <- ggplot(data, aes(x=gender)) + ggtitle("Gender") + xlab("Gender") +
-  geom_bar(aes(y = 100*(..count..)/sum(..count..)), width = 0.5) + ylab("Percentage") + coord_flip() + theme_minimal()
-p2 <- ggplot(data, aes(x=SeniorCitizen)) + ggtitle("Senior Citizen") + xlab("Senior Citizen") + 
-  geom_bar(aes(y = 100*(..count..)/sum(..count..)), width = 0.5) + ylab("Percentage") + coord_flip() + theme_minimal()
-p3 <- ggplot(data, aes(x=Partner)) + ggtitle("Partner") + xlab("Partner") + 
-  geom_bar(aes(y = 100*(..count..)/sum(..count..)), width = 0.5) + ylab("Percentage") + coord_flip() + theme_minimal()
-p4 <- ggplot(data, aes(x=Dependents)) + ggtitle("Dependents") + xlab("Dependents") +
-  geom_bar(aes(y = 100*(..count..)/sum(..count..)), width = 0.5) + ylab("Percentage") + coord_flip() + theme_minimal()
-grid.arrange(p1, p2, p3, p4, ncol=2)
-p5 <- ggplot(data, aes(x=PhoneService)) + ggtitle("Phone Service") + xlab("Phone Service") +
-  geom_bar(aes(y = 100*(..count..)/sum(..count..)), width = 0.5) + ylab("Percentage") + coord_flip() + theme_minimal()
-p6 <- ggplot(data, aes(x=MultipleLines)) + ggtitle("Multiple Lines") + xlab("Multiple Lines") + 
-  geom_bar(aes(y = 100*(..count..)/sum(..count..)), width = 0.5) + ylab("Percentage") + coord_flip() + theme_minimal()
-p7 <- ggplot(data, aes(x=InternetService)) + ggtitle("Internet Service") + xlab("Internet Service") + 
-  geom_bar(aes(y = 100*(..count..)/sum(..count..)), width = 0.5) + ylab("Percentage") + coord_flip() + theme_minimal()
-p8 <- ggplot(data, aes(x=OnlineSecurity)) + ggtitle("Online Security") + xlab("Online Security") +
-  geom_bar(aes(y = 100*(..count..)/sum(..count..)), width = 0.5) + ylab("Percentage") + coord_flip() + theme_minimal()
-grid.arrange(p5, p6, p7, p8, ncol=2)
+# #plot(ndata)
+# p1 <- ggplot(data, aes(x=gender)) + ggtitle("Gender") + xlab("Gender") +
+#   geom_bar(aes(y = 100*(..count..)/sum(..count..)), width = 0.5) + ylab("Percentage") + coord_flip() + theme_minimal()
+# p2 <- ggplot(data, aes(x=SeniorCitizen)) + ggtitle("Senior Citizen") + xlab("Senior Citizen") + 
+#   geom_bar(aes(y = 100*(..count..)/sum(..count..)), width = 0.5) + ylab("Percentage") + coord_flip() + theme_minimal()
+# p3 <- ggplot(data, aes(x=Partner)) + ggtitle("Partner") + xlab("Partner") + 
+#   geom_bar(aes(y = 100*(..count..)/sum(..count..)), width = 0.5) + ylab("Percentage") + coord_flip() + theme_minimal()
+# p4 <- ggplot(data, aes(x=Dependents)) + ggtitle("Dependents") + xlab("Dependents") +
+#   geom_bar(aes(y = 100*(..count..)/sum(..count..)), width = 0.5) + ylab("Percentage") + coord_flip() + theme_minimal()
+# grid.arrange(p1, p2, p3, p4, ncol=2)
+# p5 <- ggplot(data, aes(x=PhoneService)) + ggtitle("Phone Service") + xlab("Phone Service") +
+#   geom_bar(aes(y = 100*(..count..)/sum(..count..)), width = 0.5) + ylab("Percentage") + coord_flip() + theme_minimal()
+# p6 <- ggplot(data, aes(x=MultipleLines)) + ggtitle("Multiple Lines") + xlab("Multiple Lines") + 
+#   geom_bar(aes(y = 100*(..count..)/sum(..count..)), width = 0.5) + ylab("Percentage") + coord_flip() + theme_minimal()
+# p7 <- ggplot(data, aes(x=InternetService)) + ggtitle("Internet Service") + xlab("Internet Service") + 
+#   geom_bar(aes(y = 100*(..count..)/sum(..count..)), width = 0.5) + ylab("Percentage") + coord_flip() + theme_minimal()
+# p8 <- ggplot(data, aes(x=OnlineSecurity)) + ggtitle("Online Security") + xlab("Online Security") +
+#   geom_bar(aes(y = 100*(..count..)/sum(..count..)), width = 0.5) + ylab("Percentage") + coord_flip() + theme_minimal()
+# grid.arrange(p5, p6, p7, p8, ncol=2)
 
 
 
@@ -175,5 +164,9 @@ y_trainBIG <- as.factor(c(as.character(y_train),as.character(y_val)))
 table(y_train); table(y_val); table(y_test); table(y_trainBIG)
 
 ######### Logistic regression
+## Problem 11/2: reason might be Churn has a little 'Yes'
+## Next Step: 1.try different variables 2.use different methods to impute missing values 3.try to solve problems
+
 LR <- glm(formula = y_trainBIG~., data = trainBIG, family = binomial("logit"))
 LR
+                       
